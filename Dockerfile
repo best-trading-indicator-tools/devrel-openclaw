@@ -31,6 +31,11 @@ RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
+# Install wacli for WhatsApp skill (sync, search, send to third parties)
+RUN ARCH=$(dpkg --print-architecture | sed 's/amd64/x86_64/') && \
+    curl -fsSL "https://github.com/steipete/wacli/releases/latest/download/wacli_Linux_${ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin && chmod +x /usr/local/bin/wacli
+
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
@@ -39,10 +44,6 @@ RUN chown -R node:node /app
 # This reduces the attack surface by preventing container escape via root privileges
 USER node
 
-# Start gateway server with default config.
-# Binds to loopback (127.0.0.1) by default for security.
-#
-# For container platforms requiring external health checks:
-#   1. Set OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD env var
-#   2. Override CMD: ["node","openclaw.mjs","gateway","--allow-unconfigured","--bind","lan"]
-CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured"]
+# Start gateway server. Bind to lan (0.0.0.0) for container healthchecks.
+# Requires OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD when binding beyond loopback.
+CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan"]

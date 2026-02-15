@@ -10,7 +10,7 @@ Deploy the OpenClaw repo directly on Railway (vs the one-click template). Use th
    Service → Volumes → New Volume → mount at `/data`.
 
 3. **Variables** (Service → Variables):
-   - `OPENCLAW_GATEWAY_TOKEN` — **required** (generate: `openssl rand -hex 32`)
+   - `OPENCLAW_GATEWAY_TOKEN` — **required** (generate: `openssl rand -hex 32`). Required for healthchecks when gateway binds to lan.
    - `PORT` = `8080`
    - `OPENCLAW_GATEWAY_PORT` = `8080`
    - `OPENCLAW_STATE_DIR` = `/data/.openclaw`
