@@ -27,3 +27,5 @@ OPENCLAW_STATE_DIR = "/data/.openclaw"
 OPENCLAW_WORKSPACE_DIR = "/data/workspace"
 # Optional: merge Telegram groups without editing openclaw.json (JSON object: groupId -> { requireMention?: boolean })
 # OPENCLAW_TELEGRAM_GROUPS_JSON = '{"-5297597380":{"requireMention":false}}'
+# Optional: default model for agents (e.g. minimax/MiniMax-M2.5 when MINIMAX_API_KEY is set)
+# OPENCLAW_DEFAULT_MODEL = "minimax/MiniMax-M2.5"

@@ -155,6 +155,59 @@ function mergeTelegramGroupsFromEnv(
   }
 }
 
+const MINIMAX_API_BASE_URL = "https://api.minimax.io/anthropic";
+const MINIMAX_DEFAULT_CONTEXT = 200_000;
+const MINIMAX_DEFAULT_MAX_TOKENS = 8192;
+
+/** Merge default model from OPENCLAW_DEFAULT_MODEL (e.g. minimax/MiniMax-M2.5 for Railway). */
+function mergeDefaultModelFromEnv(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): void {
+  const raw = env.OPENCLAW_DEFAULT_MODEL?.trim();
+  if (!raw) {
+    return;
+  }
+  if (!cfg.agents) {
+    cfg.agents = {};
+  }
+  if (!cfg.agents.defaults) {
+    cfg.agents.defaults = {};
+  }
+  const existingModel = cfg.agents.defaults.model;
+  cfg.agents.defaults.model =
+    typeof existingModel === "object" && existingModel !== null
+      ? { ...existingModel, primary: raw }
+      : { primary: raw };
+  if (raw.startsWith("minimax/")) {
+    if (!cfg.models) {
+      cfg.models = {};
+    }
+    if (!cfg.models.providers) {
+      cfg.models.providers = {};
+    }
+    const existing = cfg.models.providers.minimax;
+    const hasM25 = existing?.models?.some((m) => m.id === "MiniMax-M2.5");
+    if (!hasM25) {
+      const cost = { input: 15, output: 60, cacheRead: 2, cacheWrite: 10 };
+      const m25 = {
+        id: "MiniMax-M2.5",
+        name: "MiniMax M2.5",
+        reasoning: true,
+        input: ["text"] as const,
+        cost,
+        contextWindow: MINIMAX_DEFAULT_CONTEXT,
+        maxTokens: MINIMAX_DEFAULT_MAX_TOKENS,
+      };
+      cfg.models.providers.minimax = {
+        ...existing,
+        baseUrl: existing?.baseUrl ?? MINIMAX_API_BASE_URL,
+        api: (existing?.api ?? "anthropic-messages") as "anthropic-messages",
+        models: [...(existing?.models ?? []), m25].filter(
+          (m, i, arr) => arr.findIndex((x) => x.id === m.id) === i,
+        ),
+      };
+    }
+  }
+}
+
 export function resolveConfigSnapshotHash(snapshot: {
   hash?: string;
   raw?: string | null;
@@ -628,6 +681,7 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       applyConfigEnvVars(cfg, deps.env);
 
       mergeTelegramGroupsFromEnv(cfg, deps.env, deps.json5);
+      mergeDefaultModelFromEnv(cfg, deps.env);
 
       const enabled = shouldEnableShellEnvFallback(deps.env) || cfg.env?.shellEnv?.enabled === true;
       if (enabled && !shouldDeferShellEnvFallback(deps.env)) {
