@@ -16,6 +16,8 @@ type XTweet = {
     retweet_count?: number;
     reply_count?: number;
     quote_count?: number;
+    bookmark_count?: number;
+    impression_count?: number;
   };
 };
 
@@ -109,7 +111,9 @@ function engagementScore(t: XTweet): number {
     (m.like_count ?? 0) +
     (m.retweet_count ?? 0) * 2 +
     (m.reply_count ?? 0) * 1.5 +
-    (m.quote_count ?? 0) * 2
+    (m.quote_count ?? 0) * 2 +
+    (m.bookmark_count ?? 0) * 3 +
+    (m.impression_count ?? 0) * 0.01
   );
 }
 
@@ -195,7 +199,14 @@ async function doPostTweetOAuth1(
 const FetchTweetsSchema = Type.Object({
   username: Type.String({ description: "X username (without @)" }),
   limit: Type.Optional(
-    Type.Number({ description: "Max tweets to return (default 10)", default: 10 }),
+    Type.Number({ description: "Max tweets to return (default 10, max 100)", default: 10 }),
+  ),
+  fetchAll: Type.Optional(
+    Type.Boolean({
+      description:
+        "Fetch all available tweets (up to 3200) before sorting. Slower but finds best tweets across full history. Default false.",
+      default: false,
+    }),
   ),
   sortByEngagement: Type.Optional(
     Type.Boolean({ description: "Sort by engagement score (default true)", default: true }),
@@ -211,7 +222,7 @@ export function createXApiTools(): AnyAgentTool[] {
     label: "X Fetch Tweets",
     name: "x_fetch_tweets",
     description:
-      "Fetch tweets from an X (Twitter) user. Uses OAuth 2.0 access token (preferred) or X_BEARER_TOKEN.",
+      "Fetch tweets from an X (Twitter) user. Set fetchAll=true to scan up to 3200 tweets and find the best by engagement. Returns likes, retweets, replies, quotes, bookmarks, and impressions.",
     parameters: FetchTweetsSchema,
     async execute(_toolCallId, params) {
       let bearer = getBearerToken();
@@ -232,11 +243,13 @@ export function createXApiTools(): AnyAgentTool[] {
         return jsonResult({ error: "username is required" });
       }
       const limit = Math.min(100, Math.max(1, Number(params?.limit) || 10));
+      const fetchAll = params?.fetchAll === true;
+      const fetchCount = fetchAll ? 3200 : limit * 2;
       const sortByEngagement = params?.sortByEngagement !== false;
       const tryFetch = async (token: string): Promise<{ user: XUser; tweets: XTweet[] } | null> => {
         const user = await fetchXUser(username, token);
         if (!user) return null;
-        const tweets = await fetchXTweets(user.id, token, limit * 2);
+        const tweets = await fetchXTweets(user.id, token, fetchCount);
         return { user, tweets };
       };
       try {
