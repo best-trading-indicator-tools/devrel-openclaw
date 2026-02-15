@@ -17,6 +17,7 @@ Deploy the OpenClaw repo directly on Railway (vs the one-click template). Use th
    - `OPENCLAW_WORKSPACE_DIR` = `/data/workspace`
    - Model/channel keys: `MINIMAX_API_KEY`, `TELEGRAM_BOT_TOKEN`, etc.
    - `OPENCLAW_TELEGRAM_GROUPS_JSON` (optional) — merge Telegram groups without editing config, e.g. `{"-5297597380":{"requireMention":false}}`
+   - `OPENCLAW_WHATSAPP_ALLOW_FROM` (optional) — comma-separated E.164 phone numbers to allow on WhatsApp, e.g. `+33768728401,+15551234567`
    - `OPENCLAW_DEFAULT_MODEL` (optional) — default model for agents, e.g. `minimax/MiniMax-M2.5` (requires `MINIMAX_API_KEY`)
    - `OPENCLAW_SOUL_TEMPLATE` (optional) — use a custom SOUL template on workspace creation, e.g. `adapty` for `SOUL.adapty.md` (DevRel agent)
 

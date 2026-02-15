@@ -159,6 +159,30 @@ const MINIMAX_API_BASE_URL = "https://api.minimax.io/anthropic";
 const MINIMAX_DEFAULT_CONTEXT = 200_000;
 const MINIMAX_DEFAULT_MAX_TOKENS = 8192;
 
+/** Merge WhatsApp allowFrom from OPENCLAW_WHATSAPP_ALLOW_FROM (comma-separated E.164 numbers). */
+function mergeWhatsAppAllowFromEnv(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): void {
+  const raw = env.OPENCLAW_WHATSAPP_ALLOW_FROM?.trim();
+  if (!raw) {
+    return;
+  }
+  const numbers = raw
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+  if (numbers.length === 0) {
+    return;
+  }
+  if (!cfg.channels) {
+    cfg.channels = {};
+  }
+  if (!cfg.channels.whatsapp) {
+    cfg.channels.whatsapp = {};
+  }
+  const existing = cfg.channels.whatsapp.allowFrom ?? [];
+  const merged = [...new Set([...existing, ...numbers])];
+  cfg.channels.whatsapp.allowFrom = merged;
+}
+
 /** Merge default model from OPENCLAW_DEFAULT_MODEL (e.g. minimax/MiniMax-M2.5 for Railway). */
 function mergeDefaultModelFromEnv(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): void {
   const raw = env.OPENCLAW_DEFAULT_MODEL?.trim();
@@ -681,6 +705,7 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       applyConfigEnvVars(cfg, deps.env);
 
       mergeTelegramGroupsFromEnv(cfg, deps.env, deps.json5);
+      mergeWhatsAppAllowFromEnv(cfg, deps.env);
       mergeDefaultModelFromEnv(cfg, deps.env);
 
       const enabled = shouldEnableShellEnvFallback(deps.env) || cfg.env?.shellEnv?.enabled === true;
