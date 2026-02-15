@@ -16,6 +16,7 @@ Deploy the OpenClaw repo directly on Railway (vs the one-click template). Use th
    - `OPENCLAW_STATE_DIR` = `/data/.openclaw`
    - `OPENCLAW_WORKSPACE_DIR` = `/data/workspace`
    - Model/channel keys: `MINIMAX_API_KEY`, `TELEGRAM_BOT_TOKEN`, etc.
+   - `OPENCLAW_TELEGRAM_GROUPS_JSON` (optional) — merge Telegram groups without editing config, e.g. `{"-5297597380":{"requireMention":false}}`
 
 4. **Public Networking**  
    Settings → Networking → Generate Domain. Ensure HTTP proxy uses port **8080**.

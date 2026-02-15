@@ -128,6 +128,25 @@ function hashConfigRaw(raw: string | null): string {
     .digest("hex");
 }
 
+/** Merge Telegram groups from OPENCLAW_TELEGRAM_GROUPS_JSON (for Railway/container deployments). */
+function mergeTelegramGroupsFromEnv(
+  cfg: OpenClawConfig,
+  env: NodeJS.ProcessEnv,
+  json5: { parse: (s: string) => unknown },
+): void {
+  const raw = env.OPENCLAW_TELEGRAM_GROUPS_JSON?.trim();
+  if (!raw) return;
+  try {
+    const groups = json5.parse(raw);
+    if (!groups || typeof groups !== "object" || Array.isArray(groups)) return;
+    if (!cfg.channels) cfg.channels = {};
+    if (!cfg.channels.telegram) cfg.channels.telegram = {};
+    cfg.channels.telegram.groups = { ...(cfg.channels.telegram.groups ?? {}), ...groups };
+  } catch {
+    // ignore parse errors
+  }
+}
+
 export function resolveConfigSnapshotHash(snapshot: {
   hash?: string;
   raw?: string | null;
@@ -599,6 +618,8 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       }
 
       applyConfigEnvVars(cfg, deps.env);
+
+      mergeTelegramGroupsFromEnv(cfg, deps.env, deps.json5);
 
       const enabled = shouldEnableShellEnvFallback(deps.env) || cfg.env?.shellEnv?.enabled === true;
       if (enabled && !shouldDeferShellEnvFallback(deps.env)) {
