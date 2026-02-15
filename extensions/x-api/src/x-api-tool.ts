@@ -211,13 +211,18 @@ export function createXApiTools(): AnyAgentTool[] {
     label: "X Fetch Tweets",
     name: "x_fetch_tweets",
     description:
-      "Fetch tweets from an X (Twitter) user. Returns recent tweets, optionally sorted by engagement. Requires X_BEARER_TOKEN.",
+      "Fetch tweets from an X (Twitter) user. Uses OAuth 2.0 access token (preferred) or X_BEARER_TOKEN.",
     parameters: FetchTweetsSchema,
     async execute(_toolCallId, params) {
-      const bearer = getBearerToken();
+      let bearer = getBearerToken();
+      const oauth2 = getOAuth2Credentials();
+      if (oauth2) {
+        bearer = oauth2.accessToken;
+      }
       if (!bearer) {
         return jsonResult({
-          error: "X_BEARER_TOKEN not set. Add it to your environment.",
+          error:
+            "Set X_OAUTH2_ACCESS_TOKEN (run `openclaw x-api login`) or X_BEARER_TOKEN for app-only read.",
         });
       }
       const username = String(params?.username ?? "")
@@ -228,12 +233,31 @@ export function createXApiTools(): AnyAgentTool[] {
       }
       const limit = Math.min(100, Math.max(1, Number(params?.limit) || 10));
       const sortByEngagement = params?.sortByEngagement !== false;
+      const tryFetch = async (token: string): Promise<{ user: XUser; tweets: XTweet[] } | null> => {
+        const user = await fetchXUser(username, token);
+        if (!user) return null;
+        const tweets = await fetchXTweets(user.id, token, limit * 2);
+        return { user, tweets };
+      };
       try {
-        const user = await fetchXUser(username, bearer);
-        if (!user) {
-          return jsonResult({ error: `User @${username} not found` });
+        let out: { user: XUser; tweets: XTweet[] } | null;
+        try {
+          out = await tryFetch(bearer);
+        } catch (err) {
+          if (oauth2 && (String(err).includes("401") || String(err).includes("403"))) {
+            const refreshed = await refreshAccessToken({
+              clientId: oauth2.clientId,
+              clientSecret: oauth2.clientSecret,
+              refreshToken: oauth2.refreshToken,
+            });
+            out = await tryFetch(refreshed.accessToken);
+          } else {
+            throw err;
+          }
         }
-        const tweets = await fetchXTweets(user.id, bearer, limit * 2);
+        if (!out) return jsonResult({ error: `User @${username} not found` });
+        const { user, tweets } = out;
+        if (tweets.length === 0) return jsonResult({ error: `No tweets found for @${username}` });
         let result = tweets;
         if (sortByEngagement && tweets.length > 0) {
           result = tweets
