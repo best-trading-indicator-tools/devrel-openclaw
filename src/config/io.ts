@@ -135,13 +135,21 @@ function mergeTelegramGroupsFromEnv(
   json5: { parse: (s: string) => unknown },
 ): void {
   const raw = env.OPENCLAW_TELEGRAM_GROUPS_JSON?.trim();
-  if (!raw) return;
+  if (!raw) {
+    return;
+  }
   try {
     const groups = json5.parse(raw);
-    if (!groups || typeof groups !== "object" || Array.isArray(groups)) return;
-    if (!cfg.channels) cfg.channels = {};
-    if (!cfg.channels.telegram) cfg.channels.telegram = {};
-    cfg.channels.telegram.groups = { ...(cfg.channels.telegram.groups ?? {}), ...groups };
+    if (!groups || typeof groups !== "object" || Array.isArray(groups)) {
+      return;
+    }
+    if (!cfg.channels) {
+      cfg.channels = {};
+    }
+    if (!cfg.channels.telegram) {
+      cfg.channels.telegram = {};
+    }
+    cfg.channels.telegram.groups = { ...cfg.channels.telegram.groups, ...groups };
   } catch {
     // ignore parse errors
   }
