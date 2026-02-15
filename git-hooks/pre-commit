@@ -1,9 +1,11 @@
 #!/bin/sh
+ROOT="$(git rev-parse --show-toplevel)"
+BIN="$ROOT/node_modules/.bin"
 FILES=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
 [ -z "$FILES" ] && exit 0
 
-echo "$FILES" | xargs pnpm lint --fix
-echo "$FILES" | xargs pnpm format --no-error-on-unmatched-pattern
+echo "$FILES" | xargs "$BIN/oxlint" --type-aware --fix
+echo "$FILES" | xargs "$BIN/oxfmt" --write --no-error-on-unmatched-pattern
 echo "$FILES" | xargs git add
 
 exit 0
