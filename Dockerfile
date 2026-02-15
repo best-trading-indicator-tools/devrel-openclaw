@@ -31,11 +31,6 @@ RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
-# Install wacli for WhatsApp skill (sync, search, send to third parties)
-RUN ARCH=$(dpkg --print-architecture | sed 's/amd64/x86_64/') && \
-    curl -fsSL "https://github.com/steipete/wacli/releases/latest/download/wacli_Linux_${ARCH}.tar.gz" \
-    | tar -xz -C /usr/local/bin && chmod +x /usr/local/bin/wacli
-
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
