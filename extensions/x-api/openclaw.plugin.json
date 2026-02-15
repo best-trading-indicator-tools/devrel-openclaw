@@ -1,0 +1,5 @@
+{
+  "id": "x-api",
+  "name": "X (Twitter) API",
+  "description": "Fetch tweets and post to X (Twitter) via API."
+}

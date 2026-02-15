@@ -34,11 +34,11 @@ ENV NODE_ENV=production
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
-# Security hardening: Run as non-root user
-# The node:22-bookworm image includes a 'node' user (uid 1000)
-# This reduces the attack surface by preventing container escape via root privileges
-USER node
+# Entrypoint: fix /data volume permissions (may be root-owned), then exec as node.
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Start gateway server. Bind to lan (0.0.0.0) for container healthchecks.
+ENTRYPOINT ["docker-entrypoint.sh"]
 # Requires OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD when binding beyond loopback.
 CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan"]
