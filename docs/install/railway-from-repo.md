@@ -25,6 +25,31 @@ Deploy the OpenClaw repo directly on Railway (vs the one-click template). Use th
 
 5. Open `https://<your-domain>/openclaw` for the Control UI.
 
+## WhatsApp
+
+WhatsApp uses WhatsApp Web (Baileys). To add it:
+
+1. Add `channels.whatsapp` and `web` to your config (see [WhatsApp docs](/channels/whatsapp)).
+2. Open Control UI → **Channels** → **WhatsApp** → **Show QR**.
+3. On your phone: WhatsApp → Settings → Linked Devices → Link a Device → scan the QR.
+4. Add your number to `allowFrom` (E.164, e.g. `["+33612345678"]`) so the bot accepts your DMs.
+
+Minimal config:
+
+```json5
+{
+  channels: {
+    whatsapp: {
+      dmPolicy: "allowlist",
+      allowFrom: ["+33612345678"],
+    },
+  },
+  web: { enabled: true },
+}
+```
+
+Replace `+33612345678` with your real number. Credentials persist in `/data/.openclaw/credentials/whatsapp/` on the volume.
+
 ## Config
 
 Config is written to `/data/.openclaw/openclaw.json`. On first deploy the gateway starts with `--allow-unconfigured`; configure via:
