@@ -24,6 +24,7 @@ requiredMountPath = "/data"
 PORT = "8080"
 OPENCLAW_GATEWAY_PORT = "8080"
 OPENCLAW_STATE_DIR = "/data/.openclaw"
+OPENCLAW_CONTROL_UI_INSECURE_AUTH = "1"
 OPENCLAW_WORKSPACE_DIR = "/data/workspace"
 # Optional: merge Telegram groups without editing openclaw.json (JSON object: groupId -> { requireMention?: boolean })
 # OPENCLAW_TELEGRAM_GROUPS_JSON = '{"-5297597380":{"requireMention":false}}'

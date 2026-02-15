@@ -708,6 +708,18 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       mergeWhatsAppAllowFromEnv(cfg, deps.env);
       mergeDefaultModelFromEnv(cfg, deps.env);
 
+      // Container deployments (Railway/Docker): auto-enable insecure Control UI auth
+      // so the web UI works with token-only auth (no device pairing).
+      if (deps.env.OPENCLAW_CONTROL_UI_INSECURE_AUTH === "1") {
+        if (!cfg.gateway) {
+          cfg.gateway = {};
+        }
+        if (!cfg.gateway.controlUi) {
+          cfg.gateway.controlUi = {};
+        }
+        cfg.gateway.controlUi.allowInsecureAuth = true;
+      }
+
       const enabled = shouldEnableShellEnvFallback(deps.env) || cfg.env?.shellEnv?.enabled === true;
       if (enabled && !shouldDeferShellEnvFallback(deps.env)) {
         loadShellEnvFallback({
