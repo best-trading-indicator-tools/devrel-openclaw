@@ -191,7 +191,7 @@ function mergeDefaultModelFromEnv(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): 
         id: "MiniMax-M2.5",
         name: "MiniMax M2.5",
         reasoning: true,
-        input: ["text"] as const,
+        input: ["text"] as Array<"text" | "image">,
         cost,
         contextWindow: MINIMAX_DEFAULT_CONTEXT,
         maxTokens: MINIMAX_DEFAULT_MAX_TOKENS,
