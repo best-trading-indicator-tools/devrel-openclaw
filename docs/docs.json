@@ -861,6 +861,7 @@
                   "install/macos-vm",
                   "install/exe-dev",
                   "install/railway",
+                  "install/railway-from-repo",
                   "install/render",
                   "install/northflank"
                 ]

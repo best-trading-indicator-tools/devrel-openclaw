@@ -97,3 +97,14 @@ Download a backup at:
 - `https://<your-railway-domain>/setup/export`
 
 This exports your OpenClaw state + workspace so you can migrate to another host without losing config or memory.
+
+## Deploy from this repo
+
+To deploy the OpenClaw repo directly (e.g. from a fork or `main`):
+
+1. Railway Dashboard → New Project → Deploy from GitHub → select `openclaw/openclaw`.
+2. Add a Volume at `/data`.
+3. Set Variables: `OPENCLAW_GATEWAY_TOKEN` (required), `PORT=8080`, `OPENCLAW_GATEWAY_PORT=8080`, `OPENCLAW_STATE_DIR=/data/.openclaw`, `OPENCLAW_WORKSPACE_DIR=/data/workspace`, plus model/channel keys.
+4. Enable HTTP Proxy on port `8080`.
+
+See [railway-from-repo](/install/railway-from-repo) for details.

@@ -1,0 +1,27 @@
+# Railway deployment config for OpenClaw
+# https://docs.railway.com/config-as-code/reference
+#
+# Deploy: Railway Dashboard → New Project → Deploy from GitHub → select this repo
+#
+# Required: Add a Volume mounted at /data, set Variables below, enable HTTP Proxy (port 8080).
+
+[build]
+builder = "dockerfile"
+
+[deploy]
+# Override Dockerfile CMD: bind to LAN (OPENCLAW_GATEWAY_PORT=8080 set below)
+startCommand = "node openclaw.mjs gateway --allow-unconfigured --bind lan"
+restartPolicyType = "on_failure"
+
+# Optional: healthcheck (gateway serves Control UI at /openclaw)
+# healthcheckPath = "/openclaw"
+# healthcheckTimeout = 120
+
+# Require a persistent volume at /data (add in Railway Dashboard → Volumes)
+requiredMountPath = "/data"
+
+[variables]
+PORT = "8080"
+OPENCLAW_GATEWAY_PORT = "8080"
+OPENCLAW_STATE_DIR = "/data/.openclaw"
+OPENCLAW_WORKSPACE_DIR = "/data/workspace"
