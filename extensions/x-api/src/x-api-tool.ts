@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import crypto from "node:crypto";
 import type { AnyAgentTool } from "../../../src/agents/tools/common.js";
 import { jsonResult } from "../../../src/agents/tools/common.js";
+import { refreshAccessToken } from "./auth-oauth2.js";
 
 const X_API_BASE = "https://api.twitter.com/2";
 
@@ -31,7 +32,21 @@ function getBearerToken(): string | null {
   return token || null;
 }
 
-function getOAuthCredentials(): {
+function getOAuth2Credentials(): {
+  clientId: string;
+  clientSecret: string;
+  accessToken: string;
+  refreshToken: string;
+} | null {
+  const clientId = process.env.X_CLIENT_ID?.trim() || process.env.X_CLIENT_SECRET_ID?.trim();
+  const clientSecret = process.env.X_CLIENT_SECRET?.trim();
+  const accessToken = process.env.X_OAUTH2_ACCESS_TOKEN?.trim();
+  const refreshToken = process.env.X_OAUTH2_REFRESH_TOKEN?.trim();
+  if (!clientId || !clientSecret || !accessToken || !refreshToken) return null;
+  return { clientId, clientSecret, accessToken, refreshToken };
+}
+
+function getOAuth1Credentials(): {
   apiKey: string;
   apiSecret: string;
   accessToken: string;
@@ -130,7 +145,30 @@ function oauth1Sign(
     .join(", ");
 }
 
-async function doPostTweet(
+async function doPostTweetOAuth2(
+  text: string,
+  accessToken: string,
+): Promise<{ id: string; text: string }> {
+  const url = `${X_API_BASE}/tweets`;
+  const body = JSON.stringify({ text: text.slice(0, 280) });
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body,
+  });
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`X API post failed: ${res.status} ${errBody}`);
+  }
+  const data = (await res.json()) as { data?: { id: string; text: string } };
+  if (!data.data) throw new Error("X API post: no data in response");
+  return data.data;
+}
+
+async function doPostTweetOAuth1(
   text: string,
   creds: { apiKey: string; apiSecret: string; accessToken: string; accessTokenSecret: string },
 ): Promise<{ id: string; text: string }> {
@@ -228,22 +266,43 @@ export function createXApiTools(): AnyAgentTool[] {
     label: "X Post Tweet",
     name: "x_post_tweet",
     description:
-      "Post a tweet to X (Twitter). Requires X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET.",
+      "Post a tweet to X (Twitter). Uses OAuth 2.0 (X_CLIENT_ID, X_CLIENT_SECRET, X_OAUTH2_ACCESS_TOKEN, X_OAUTH2_REFRESH_TOKEN) or OAuth 1.0a (X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET).",
     parameters: PostTweetSchema,
     async execute(_toolCallId, params) {
-      const creds = getOAuthCredentials();
-      if (!creds) {
-        return jsonResult({
-          error:
-            "OAuth credentials not set. Set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET.",
-        });
-      }
       const text = String(params?.text ?? "").trim();
       if (!text) {
         return jsonResult({ error: "text is required" });
       }
+      const oauth2 = getOAuth2Credentials();
+      const oauth1 = getOAuth1Credentials();
+      if (!oauth2 && !oauth1) {
+        return jsonResult({
+          error:
+            "No OAuth credentials. For OAuth 2.0: set X_CLIENT_ID, X_CLIENT_SECRET, X_OAUTH2_ACCESS_TOKEN, X_OAUTH2_REFRESH_TOKEN (run `openclaw x-api login`). For OAuth 1.0a: set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET.",
+        });
+      }
       try {
-        const posted = await doPostTweet(text, creds);
+        let posted: { id: string; text: string };
+        if (oauth2) {
+          let accessToken = oauth2.accessToken;
+          try {
+            posted = await doPostTweetOAuth2(text, accessToken);
+          } catch (err) {
+            if (String(err).includes("401") || String(err).includes("403")) {
+              const refreshed = await refreshAccessToken({
+                clientId: oauth2.clientId,
+                clientSecret: oauth2.clientSecret,
+                refreshToken: oauth2.refreshToken,
+              });
+              accessToken = refreshed.accessToken;
+              posted = await doPostTweetOAuth2(text, accessToken);
+            } else {
+              throw err;
+            }
+          }
+        } else {
+          posted = await doPostTweetOAuth1(text, oauth1!);
+        }
         return jsonResult({
           success: true,
           id: posted.id,

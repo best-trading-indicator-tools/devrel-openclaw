@@ -113,6 +113,13 @@ const coreEntries: CoreCliEntry[] = [
       mod.registerBrowserCli(program);
     },
   },
+  {
+    commands: [{ name: "x-api", description: "X (Twitter) API OAuth 2.0 login" }],
+    register: async ({ program }) => {
+      const mod = await import("./register.x-api.js");
+      mod.registerXApiCommands(program);
+    },
+  },
 ];
 
 export function getCoreCliCommandNames(): string[] {
