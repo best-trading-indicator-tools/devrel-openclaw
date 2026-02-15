@@ -289,7 +289,16 @@ export async function ensureAgentWorkspace(params?: {
   })();
 
   const agentsTemplate = await loadTemplate(DEFAULT_AGENTS_FILENAME);
-  const soulTemplate = await loadTemplate(DEFAULT_SOUL_FILENAME);
+  const soulTemplateName =
+    process.env.OPENCLAW_SOUL_TEMPLATE?.trim() && process.env.OPENCLAW_SOUL_TEMPLATE !== "default"
+      ? `SOUL.${process.env.OPENCLAW_SOUL_TEMPLATE.trim()}.md`
+      : DEFAULT_SOUL_FILENAME;
+  let soulTemplate: string;
+  try {
+    soulTemplate = await loadTemplate(soulTemplateName);
+  } catch {
+    soulTemplate = await loadTemplate(DEFAULT_SOUL_FILENAME);
+  }
   const toolsTemplate = await loadTemplate(DEFAULT_TOOLS_FILENAME);
   const identityTemplate = await loadTemplate(DEFAULT_IDENTITY_FILENAME);
   const userTemplate = await loadTemplate(DEFAULT_USER_FILENAME);

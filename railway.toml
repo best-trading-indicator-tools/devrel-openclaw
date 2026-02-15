@@ -13,9 +13,9 @@ builder = "dockerfile"
 startCommand = "node openclaw.mjs gateway --allow-unconfigured --bind lan"
 restartPolicyType = "on_failure"
 
-# Optional: healthcheck (gateway serves Control UI at /openclaw)
-# healthcheckPath = "/openclaw"
-# healthcheckTimeout = 120
+# Healthcheck: gateway serves Control UI at /openclaw (startup can take ~30s)
+healthcheckPath = "/openclaw"
+healthcheckTimeout = 120
 
 # Require a persistent volume at /data (add in Railway Dashboard → Volumes)
 requiredMountPath = "/data"
@@ -29,3 +29,5 @@ OPENCLAW_WORKSPACE_DIR = "/data/workspace"
 # OPENCLAW_TELEGRAM_GROUPS_JSON = '{"-5297597380":{"requireMention":false}}'
 # Optional: default model for agents (e.g. minimax/MiniMax-M2.5 when MINIMAX_API_KEY is set)
 # OPENCLAW_DEFAULT_MODEL = "minimax/MiniMax-M2.5"
+# Optional: use Adapty DevRel soul template on workspace creation (SOUL.adapty.md)
+# OPENCLAW_SOUL_TEMPLATE = "adapty"

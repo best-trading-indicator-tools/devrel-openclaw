@@ -18,6 +18,7 @@ Deploy the OpenClaw repo directly on Railway (vs the one-click template). Use th
    - Model/channel keys: `MINIMAX_API_KEY`, `TELEGRAM_BOT_TOKEN`, etc.
    - `OPENCLAW_TELEGRAM_GROUPS_JSON` (optional) — merge Telegram groups without editing config, e.g. `{"-5297597380":{"requireMention":false}}`
    - `OPENCLAW_DEFAULT_MODEL` (optional) — default model for agents, e.g. `minimax/MiniMax-M2.5` (requires `MINIMAX_API_KEY`)
+   - `OPENCLAW_SOUL_TEMPLATE` (optional) — use a custom SOUL template on workspace creation, e.g. `adapty` for `SOUL.adapty.md` (DevRel agent)
 
 4. **Public Networking**  
    Settings → Networking → Generate Domain. Ensure HTTP proxy uses port **8080**.
@@ -31,6 +32,10 @@ Config is written to `/data/.openclaw/openclaw.json`. On first deploy the gatewa
 - Env vars (e.g. `MINIMAX_API_KEY`, `TELEGRAM_BOT_TOKEN`) — some providers/channels auto-enable when set.
 - Mount a pre-built `openclaw.json` into `/data/.openclaw/`.
 - Use `openclaw configure` or `openclaw onboard` via Railway shell (if available).
+
+## Workspace location
+
+`/data/workspace` is the agent workspace directory. It lives inside the `/data` volume you mount, so it persists across deploys. On first run the gateway creates it with bootstrap files (AGENTS.md, SOUL.md, USER.md, etc.). To use the Adapty DevRel soul template, set `OPENCLAW_SOUL_TEMPLATE=adapty` **before** the first run so the workspace is seeded with `SOUL.adapty.md` content.
 
 ## One-click template (alternative)
 
